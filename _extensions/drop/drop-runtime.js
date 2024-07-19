@@ -1,0 +1,1 @@
+window.RevealDrop=window.RevealDrop||{id:"RevealDrop",init:function(){let o=document.createElement("div");o.className="drop-clip";let e=document.createElement("div");e.className="drop",e.innerHTML="Yo",o.appendChild(e),document.querySelector(".reveal").appendChild(o),document.addEventListener("keydown",i=>{i.key=="`"&&e.classList.toggle("active")})}};
