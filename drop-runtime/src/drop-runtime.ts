@@ -56,7 +56,11 @@ window.RevealDrop = window.RevealDrop || {
       button.id = "toggle-drop";
       link.href = "#";
       link.title = `Toggle console (${config.shortcut})`;
-      link.onclick = () => window.RevealDrop.toggleDrop();
+      link.onclick = (event) => {
+        window.RevealDrop.toggleDrop();
+        event.preventDefault();
+        event.stopPropagation();
+      }
       link.innerHTML = require('./svg/terminal.svg');
       button.appendChild(link);
       document.querySelector(".reveal").appendChild(button);
