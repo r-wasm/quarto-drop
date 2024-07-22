@@ -1,0 +1,21 @@
+.plot-background {
+  background-color: var(--quarto-body-bg);
+  flex-grow: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.plot-container {
+  max-width: 90%;
+  max-height: 90%;
+  overflow: hidden;
+  background-color: white;
+}
+
+.plot-container canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}

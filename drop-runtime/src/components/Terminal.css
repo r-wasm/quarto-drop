@@ -1,0 +1,10 @@
+#terminal {
+  color: var(--quarto-body-color);
+  background-color: var(--quarto-body-bg);
+  padding: 0px 5px 40px 5px;
+}
+
+.terminal-container {
+  flex-grow: 1;
+  overflow: auto;
+}

@@ -1,0 +1,23 @@
+.reveal .drop .app {
+  /*
+  --drop-scale: 1.2;
+  width: calc(100vw / var(--drop-scale));
+  height: calc(100vh / var(--drop-scale));
+  height: calc(100dvh / var(--drop-scale));
+  transform-origin: 0 0;
+  transform: scale(var(--drop-scale));
+  */
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+}
+
+div[data-panel] {
+  display: flex;
+  flex-direction: column;
+}
+
+div[data-resize-handle] {
+  padding: 2px;
+  background-color: var(--quarto-border-color);
+}
