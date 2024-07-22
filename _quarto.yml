@@ -1,0 +1,5 @@
+project:
+  type: website
+  render:
+    - example.qmd
+  output-dir: example_site

@@ -1,3 +1,6 @@
 node_modules
 example.html
 example_files
+example_site
+
+/.quarto/
