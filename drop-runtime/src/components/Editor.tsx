@@ -11,10 +11,12 @@ import { indentWithTab } from '@codemirror/commands';
 import { Panel } from 'react-resizable-panels';
 import { TerminalInterface } from '../App';
 import { r } from 'codemirror-lang-r';
+import { python } from '@codemirror/lang-python';
 import type { WebRDataJsAtomic } from 'webr/dist/webR/robj';
 import 'react-data-grid/lib/styles.css';
 import './Editor.css';
 import * as utils from './utils';
+import { PyodideConsole } from '../pyodide-console';
 
 const tagHighlighterTok = tagHighlighter([
   { tag: tags.keyword, class: "tok-keyword" },
@@ -40,18 +42,20 @@ const tabSize = new Compartment();
 
 export function Editor({
   webR,
+  pyConsolePromise,
   terminalInterface,
 }: {
-  webR: WebR
+  webR?: WebR
+  pyConsolePromise?: Promise<PyodideConsole>;
   terminalInterface: TerminalInterface;
 }) {
   const editorRef = React.useRef<HTMLDivElement | null>(null);
   const [editorView, setEditorView] = React.useState<EditorView>();
   const runSelectedCode = React.useRef((): void => {
-    throw new Error('Unable to run code, webR not initialised.');
+    throw new Error('Unable to run code, execution engine not initialised.');
   });
 
-  const completionMethods = React.useRef<null | {
+  const webRCompletion = React.useRef<null | {
     assignLineBuffer: RFunction;
     assignToken: RFunction;
     assignStart: RFunction;
@@ -63,18 +67,20 @@ export function Editor({
   React.useEffect(() => {
     let shelter: Shelter | null = null;
 
-    void webR.init().then(async () => {
-      shelter = await new webR.Shelter();
-      await webR.evalRVoid('rc.settings(func=TRUE, fuzzy=TRUE)');
-      completionMethods.current = {
-        assignLineBuffer: await shelter.evalR('utils:::.assignLinebuffer') as RFunction,
-        assignToken: await shelter.evalR('utils:::.assignToken') as RFunction,
-        assignStart: await shelter.evalR('utils:::.assignStart') as RFunction,
-        assignEnd: await shelter.evalR('utils:::.assignEnd') as RFunction,
-        completeToken: await shelter.evalR('utils:::.completeToken') as RFunction,
-        retrieveCompletions: await shelter.evalR('utils:::.retrieveCompletions') as RFunction,
-      };
-    });
+    if (webR) {
+      void webR.init().then(async () => {
+        shelter = await new webR.Shelter();
+        await webR.evalRVoid('rc.settings(func=TRUE, fuzzy=TRUE)');
+        webRCompletion.current = {
+          assignLineBuffer: await shelter.evalR('utils:::.assignLinebuffer') as RFunction,
+          assignToken: await shelter.evalR('utils:::.assignToken') as RFunction,
+          assignStart: await shelter.evalR('utils:::.assignStart') as RFunction,
+          assignEnd: await shelter.evalR('utils:::.assignEnd') as RFunction,
+          completeToken: await shelter.evalR('utils:::.completeToken') as RFunction,
+          retrieveCompletions: await shelter.evalR('utils:::.retrieveCompletions') as RFunction,
+        };
+      });
+    }
 
     return function cleanup() {
       if (shelter) void shelter.purge();
@@ -82,34 +88,44 @@ export function Editor({
   }, []);
 
   const completion = React.useCallback(async (context: CompletionContext) => {
-    if (!completionMethods.current) {
-      return null;
-    }
     const line = context.state.doc.lineAt(context.state.selection.main.head).text;
     const { from, to, text } = context.matchBefore(/[a-zA-Z0-9_.:]*/) ?? { from: 0, to: 0, text: '' };
+    let options: {label: string, boost?: number}[] = [];
     if (from === to && !context.explicit) {
       return null;
     }
-    await completionMethods.current.assignLineBuffer(line.replace(/\)+$/, ""));
-    await completionMethods.current.assignToken(text);
-    await completionMethods.current.assignStart(from + 1);
-    await completionMethods.current.assignEnd(to + 1);
-    await completionMethods.current.completeToken();
-    const compl = await completionMethods.current.retrieveCompletions() as WebRDataJsAtomic<string>;
-    const options = compl.values.map((val) => {
-      if (!val) {
-        throw new Error('Missing values in completion result.');
+
+    if (webR) {
+      if (!webRCompletion.current) {
+        return null;
       }
-      return { label: val, boost: val.endsWith("=") ? 10 : 0 };
-    });
+      await webRCompletion.current.assignLineBuffer(line.replace(/\)+$/, ""));
+      await webRCompletion.current.assignToken(text);
+      await webRCompletion.current.assignStart(from + 1);
+      await webRCompletion.current.assignEnd(to + 1);
+      await webRCompletion.current.completeToken();
+      const compl = await webRCompletion.current.retrieveCompletions() as WebRDataJsAtomic<string>;
+      options = compl.values.map((val) => {
+        if (!val) {
+          throw new Error('Missing values in completion result.');
+        }
+        return { label: val, boost: val.endsWith("=") ? 10 : 0 };
+      });
+  
+    } else if (pyConsolePromise) {
+      const pyConsole = await pyConsolePromise;
+      const compl = await pyConsole.complete(line)[0] as string[];
+      options = compl.map((val) => { return { label: val }; });
+    }
 
     return { from: from, options };
   }, []);
 
+  const engineLanguage = webR ? r() : python();
   const editorExtensions = [
     basicSetup,
     syntaxHighlighting(tagHighlighterTok),
-    language.of(r()),
+    language.of(engineLanguage),
     tabSize.of(EditorState.tabSize.of(2)),
     Prec.high(
       keymap.of([
@@ -137,7 +153,15 @@ export function Editor({
         code = utils.getCurrentLineText(editorView);
         utils.moveCursorToNextLine(editorView);
       }
-      code.split('\n').forEach((line) => webR.writeConsole(line));
+      if (webR) {
+        code.split('\n').forEach((line) => webR.writeConsole(line));
+      } else if (pyConsolePromise) {
+        pyConsolePromise.then((pyConsole) => {
+          code.split('\n')
+            .map((line) => () => pyConsole.writeConsole(line))
+            .reduce((cur, next) => cur.then(next), Promise.resolve());
+        });
+      }
     };
   }, [editorView]);
 
@@ -147,7 +171,16 @@ export function Editor({
     }
     const code = editorView.state.doc.toString();
     terminalInterface.write('\x1b[2K\r');
-    code.split('\n').forEach((line) => webR.writeConsole(line));
+    if (webR) {
+      code.split('\n').forEach((line) => webR.writeConsole(line));
+    } else if (pyConsolePromise) {
+      pyConsolePromise.then((pyConsole) => {
+        code.split('\n')
+          .map((line) => () => pyConsole.writeConsole(line))
+          .reduce((cur, next) => cur.then(next), Promise.resolve());
+      });
+    }
+    
   }, [editorView]);
 
   React.useEffect(() => {

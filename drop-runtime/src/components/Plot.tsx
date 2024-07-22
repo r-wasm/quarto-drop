@@ -8,7 +8,7 @@ export function Plot({
   webR,
   plotInterface,
 }: {
-  webR: WebR;
+  webR?: WebR;
   plotInterface: PlotInterface;
 }) {
   const plotContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -27,7 +27,7 @@ export function Plot({
       canvasRef.current.getContext('2d')!.drawImage(img, 0, 0);
     };
 
-    // If a new plot is created in R, add it to the list of canvas elements
+    // If a new plot is created, add it to the list of canvas elements
     plotInterface.newPlot = () => {
       const plotNumber = canvasElements.current.length + 1;
       const canvas = document.createElement('canvas');
@@ -56,24 +56,26 @@ export function Plot({
 
   // Resize the canvas() device when the plotting pane changes size
   const onPanelResize = (size: number) => {
-    plotSize.current.width = size * window.innerWidth / 100;
-    plotSize.current.height = window.innerHeight;
-
-    void webR.init().then(async () => {
-      await webR.evalRVoid(`
-        # Close any active canvas devices
-        repeat {
-          devices <- dev.list()
-          idx <- which(names(devices) == "canvas")
-          if (length(idx) == 0) {
-            break
+    if (webR) {
+      plotSize.current.width = size * window.innerWidth / 100;
+      plotSize.current.height = window.innerHeight;
+  
+      void webR.init().then(async () => {
+        await webR.evalRVoid(`
+          # Close any active canvas devices
+          repeat {
+            devices <- dev.list()
+            idx <- which(names(devices) == "canvas")
+            if (length(idx) == 0) {
+              break
+            }
+            dev.off(devices[idx[1]])
           }
-          dev.off(devices[idx[1]])
-        }
-        # Set canvas size for future devices
-        options(webr.fig.width = ${plotSize.current.width / 2}, webr.fig.height = ${plotSize.current.height / 2})
-    `, { env: {} });
-    });
+          # Set canvas size for future devices
+          options(webr.fig.width = ${plotSize.current.width / 2}, webr.fig.height = ${plotSize.current.height / 2})
+      `, { env: {} });
+      });
+    }
   };
 
   const rightPanelRef = React.useRef<ImperativePanelHandle | null>(null);
@@ -87,7 +89,7 @@ export function Plot({
   return (
     <Panel ref={rightPanelRef} onResize={onPanelResize} minSize={10}>
       <div className='plot-background'>
-          <div ref={plotContainerRef} className="plot-container"></div>
+          <div id="drop-plot" ref={plotContainerRef} className="plot-container"></div>
       </div>
     </Panel>
   );

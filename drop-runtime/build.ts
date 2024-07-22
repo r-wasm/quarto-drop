@@ -7,9 +7,12 @@ if (process.argv.includes("--watch")) {
 }
 
 const external = [
+  'node:child_process',
+  'node:crypto',
   'node:fs',
   'node:path',
   'node:url',
+  'node:vm',
 ]
 
 const options: BuildOptions = {

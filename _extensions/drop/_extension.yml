@@ -9,3 +9,12 @@ contributes:
         - drop-runtime.js
       stylesheet:
         - drop-runtime.css
+      config:
+        drop:
+          button: true
+          shortcut: "`"
+          engine: webr
+          webr:
+            packages: []
+          pyodide:
+            packages: []

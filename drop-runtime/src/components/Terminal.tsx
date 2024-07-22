@@ -12,7 +12,7 @@ export function Terminal({
   webR,
   terminalInterface,
 }: {
-  webR: WebR;
+  webR?: WebR;
   terminalInterface: TerminalInterface;
 }) {
   const divRef = React.useRef<HTMLDivElement | null>(null);
@@ -26,7 +26,9 @@ export function Terminal({
 
     // Interrupt R code executed by the Editor
     if (event.key === 'c' && event.ctrlKey) {
-      webR.interrupt();
+      if (webR) {
+        webR.interrupt();
+      }
     }
   }, []);
 
@@ -55,7 +57,8 @@ export function Terminal({
       fontSize: 22,
       screenReaderMode: true,
     });
-    term.write('webR is downloading, please wait...');
+    const engine = webR ? "WebR" : "Pyodide";
+    term.write(`${engine} is downloading, please wait...`);
 
     const fitAddon = new FitAddon();
     const readline = new Readline();
@@ -69,10 +72,12 @@ export function Terminal({
     fitAddon.fit();
 
     const resizeObserver = new ResizeObserver(() => {
-      void webR.init().then(() => {
-        const dims = fitAddon.proposeDimensions();
-        return webR.evalRVoid(`options(width=${dims ? dims.cols : 80})`);
-      });
+      if (webR) {
+        void webR.init().then(() => {
+          const dims = fitAddon.proposeDimensions();
+          return webR.evalRVoid(`options(width=${dims ? dims.cols : 80})`);
+        });
+      }
       fitAddon.fit();
     });
     resizeObserver.observe(divRef.current);

@@ -23,7 +23,7 @@
 }
 
 .reveal .drop-button {
-  position: absolute;
+  position: fixed;
   z-index: 30;
   bottom: 6px;
   left: 54px;
@@ -31,4 +31,24 @@
 
 .reveal .drop-button~.slide-chalkboard-buttons.slide-menu-offset {
   left: 95px;
+}
+
+@media screen and (max-width: 800px) {
+  .reveal .drop-button a>svg {
+    width: 18px;
+    height: 18px;
+  }
+  .reveal .drop-button {
+    bottom: 3px;
+    left: 36px;
+  }
+  .reveal .drop-button~.slide-chalkboard-buttons.slide-menu-offset {
+    left: 62px;
+  }
+}
+
+@media print {
+  .reveal .drop-clip, .drop-button {
+    display: none!important;
+  }
 }
