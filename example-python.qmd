@@ -1,0 +1,65 @@
+---
+title: "Quarto Drop plugin for Reveal.js"
+subtitle: "A dropdown R or Python console"
+format:
+  revealjs:
+    drop:
+      engine: pyodide
+revealjs-plugins:
+  - drop
+---
+
+## Quarto Drop plugin for Reveal.js
+
+Throughout this presentation, an interactive R console and editor can be invoked by pressing the drop shortcut
+
+By default, the drop shortcut is the backtick key: [&#96;]{style="background-color: #EEE; border: 1px solid #333; border-radius: 5px; padding: 0px 8px"}
+
+. . . 
+
+</br>
+
+Alternatively, click the console button in the bottom left of the slide
+
+## Configuration
+
+Set the drop shortcut and button visibility in the `yaml` header.
+
+```yaml
+---
+format:
+  revealjs:
+    drop:
+      button: false
+      shortcut: "]"
+---
+```
+
+## Execution Engine
+
+For a Python console, set the `pyodide` engine in the `yaml` header.
+
+```yaml
+---
+format:
+  revealjs:
+    drop:
+      engine: pyodide
+---
+```
+
+## Default packages
+
+Automatically download packages when the presentation starts
+
+```yaml
+---
+format:
+  revealjs:
+    drop:
+      engine: pyodide
+      pyodide:
+        packages:
+          - matplotlib
+---
+```

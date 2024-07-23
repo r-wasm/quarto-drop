@@ -33,7 +33,9 @@ revealjs-plugins:
 
 ![](https://github.com/r-wasm/quarto-drop/raw/main/images/drop.gif)
 
-Example slides: https://r-wasm.github.io/quarto-drop/
+Example slides:
+  * R: https://r-wasm.github.io/quarto-drop/example.html
+  * Python: https://r-wasm.github.io/quarto-drop/example-python.html
 
 ## Configuration
 

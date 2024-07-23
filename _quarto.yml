@@ -2,4 +2,5 @@ project:
   type: website
   render:
     - example.qmd
+    - example-python.qmd
   output-dir: example_site
