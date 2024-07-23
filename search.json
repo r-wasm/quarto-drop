@@ -1,5 +1,33 @@
 [
   {
+    "objectID": "example-python.html#quarto-drop-plugin-for-reveal.js",
+    "href": "example-python.html#quarto-drop-plugin-for-reveal.js",
+    "title": "Quarto Drop plugin for Reveal.js",
+    "section": "Quarto Drop plugin for Reveal.js",
+    "text": "Quarto Drop plugin for Reveal.js\nThroughout this presentation, an interactive R console and editor can be invoked by pressing the drop shortcut\nBy default, the drop shortcut is the backtick key: `\n\n\nAlternatively, click the console button in the bottom left of the slide"
+  },
+  {
+    "objectID": "example-python.html#configuration",
+    "href": "example-python.html#configuration",
+    "title": "Quarto Drop plugin for Reveal.js",
+    "section": "Configuration",
+    "text": "Configuration\nSet the drop shortcut and button visibility in the yaml header.\n---\nformat:\n  revealjs:\n    drop:\n      button: false\n      shortcut: \"]\"\n---"
+  },
+  {
+    "objectID": "example-python.html#execution-engine",
+    "href": "example-python.html#execution-engine",
+    "title": "Quarto Drop plugin for Reveal.js",
+    "section": "Execution Engine",
+    "text": "Execution Engine\nFor a Python console, set the pyodide engine in the yaml header.\n---\nformat:\n  revealjs:\n    drop:\n      engine: pyodide\n---"
+  },
+  {
+    "objectID": "example-python.html#default-packages",
+    "href": "example-python.html#default-packages",
+    "title": "Quarto Drop plugin for Reveal.js",
+    "section": "Default packages",
+    "text": "Default packages\nAutomatically download packages when the presentation starts\n---\nformat:\n  revealjs:\n    drop:\n      engine: pyodide\n      pyodide:\n        packages:\n          - matplotlib\n---"
+  },
+  {
     "objectID": "example.html#quarto-drop-plugin-for-reveal.js",
     "href": "example.html#quarto-drop-plugin-for-reveal.js",
     "title": "Quarto Drop plugin for Reveal.js",
