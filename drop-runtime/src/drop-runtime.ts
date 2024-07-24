@@ -1,10 +1,17 @@
 import "./drop-runtime.css";
+import keycode from 'keycode';
 import { startWebRApp, startPyodideApp } from './App';
 
 declare global {
   interface Window {
     Reveal: any;
-    RevealDrop?: any;
+    RevealDrop?: {
+      id: string;
+      dropElement: HTMLDivElement;
+      init: (reveal: any) => void;
+      toggleDrop: () => void;
+      isActive: () => boolean;
+    };
   }
 }
 
@@ -27,11 +34,9 @@ type DropConfig = {
 window.RevealDrop = window.RevealDrop || {
   id: 'RevealDrop',
   dropElement: document.createElement('div'),
-  config: {},
-  init: function() {
-    // Configuration
-    const config = window.Reveal.getConfig().drop as DropConfig;
-    window.RevealDrop.config = config;
+  init: function (reveal) {
+    const revealConfig = reveal.getConfig();
+    const config = revealConfig.drop as DropConfig;
 
     // Add Drop down panel to DOM
     const drop = window.RevealDrop.dropElement;
@@ -67,15 +72,28 @@ window.RevealDrop = window.RevealDrop || {
     }
 
     // Keyboard listeners
+    reveal.addKeyBinding({
+      keyCode: keycode(config.shortcut),
+      key: config.shortcut,
+      description: 'Toggle console'
+    }, () => {});
+
     document.addEventListener("keydown", (event) => {
       if (event.key == config.shortcut && !event.altKey) {
         window.RevealDrop.toggleDrop();
+        reveal.toggleHelp(false);
+        reveal.toggleOverview(false);
+        reveal.configure({ keyboard: !window.RevealDrop.isActive() });
         event.preventDefault();
         event.stopPropagation();
       }
     }, { capture: true });
+
   },
   toggleDrop() {
     window.RevealDrop.dropElement.classList.toggle("active");
+  },
+  isActive() {
+    return window.RevealDrop.dropElement.classList.contains("active");
   }
 };
