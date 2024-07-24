@@ -8,6 +8,7 @@ declare global {
     RevealDrop?: {
       id: string;
       dropElement: HTMLDivElement;
+      focusElement: Element | null;
       init: (reveal: any) => void;
       toggleDrop: () => void;
       isActive: () => boolean;
@@ -33,6 +34,7 @@ type DropConfig = {
 
 window.RevealDrop = window.RevealDrop || {
   id: 'RevealDrop',
+  focusElement: null,
   dropElement: document.createElement('div'),
   init: function (reveal) {
     const revealConfig = reveal.getConfig();
@@ -83,12 +85,26 @@ window.RevealDrop = window.RevealDrop || {
         window.RevealDrop.toggleDrop();
         reveal.toggleHelp(false);
         reveal.toggleOverview(false);
-        reveal.configure({ keyboard: !window.RevealDrop.isActive() });
+
+        if (window.RevealDrop.isActive()) {
+          reveal.configure({ keyboard: false });
+          // Restore focus as console is shown
+          if (window.RevealDrop.focusElement instanceof HTMLElement) {
+            window.RevealDrop.focusElement.focus();
+          }
+        } else {
+          reveal.configure({ keyboard: true });
+          // Remove focus as console is hidden
+          window.RevealDrop.focusElement = document.activeElement;
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        }
+
         event.preventDefault();
         event.stopPropagation();
       }
     }, { capture: true });
-
   },
   toggleDrop() {
     window.RevealDrop.dropElement.classList.toggle("active");
