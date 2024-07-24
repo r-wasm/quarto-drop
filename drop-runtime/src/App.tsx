@@ -74,6 +74,9 @@ export function startWebRApp(elem: HTMLDivElement, packages: string[] = []) {
         height = getOption("webr.fig.height", 504)
       )
       webr::shim_install()
+      options(pager = function(files, ...) {
+        writeLines(gsub(".[\b]", "", readLines(files)))
+      })
     `);
 
     // Install packages
