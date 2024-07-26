@@ -16,7 +16,7 @@ import type { WebRDataJsAtomic } from 'webr/dist/webR/robj';
 import 'react-data-grid/lib/styles.css';
 import './Editor.css';
 import * as utils from './utils';
-import { PyodideConsole } from '../pyodide-console';
+import type { PyodideConsole } from '../pyodide-worker';
 
 const tagHighlighterTok = tagHighlighter([
   { tag: tags.keyword, class: "tok-keyword" },

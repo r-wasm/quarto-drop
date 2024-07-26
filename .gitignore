@@ -4,3 +4,4 @@ example_files
 example_site
 
 /.quarto/
+/drop-runtime/src/*.wjs

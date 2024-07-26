@@ -1,5 +1,6 @@
 import { build, context, BuildOptions } from 'esbuild';
 import process from 'process';
+import fs from 'fs';
 
 let watch = false;
 if (process.argv.includes("--watch")) {
@@ -15,21 +16,36 @@ const external = [
   'node:vm',
 ]
 
-const options: BuildOptions = {
+const workerOptions: BuildOptions = {
+  entryPoints: ['./src/pyodide-worker.ts'],
+  external,
+  bundle: true,
+  outdir: './src',
+  minify: true,
+  platform: 'browser',
+  format: 'esm',
+  logLevel: 'info',
+}
+
+
+const dropOptions: BuildOptions = {
   entryPoints: ['./src/drop-runtime.ts'],
   external,
   bundle: true,
   outdir: '../_extensions/drop',
   minify: true,
-  loader: { '.svg': 'text' },
+  loader: { '.svg': 'text', '.wjs': 'text' },
   platform: 'browser',
   format: 'esm',
   logLevel: 'info',
 };
 
+await build(workerOptions);
+await fs.promises.rename('src/pyodide-worker.js', 'src/pyodide-worker.wjs');
+
 if (watch) {
-  const ctx = await context(options);
+  const ctx = await context(dropOptions);
   await ctx.watch();
 } else {
-  await build(options);
+  await build(dropOptions);
 }

@@ -5,10 +5,10 @@ import Editor from './components/Editor';
 import Plot from './components/Plot';
 import { Readline } from 'xterm-readline';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import * as Comlink from 'comlink';
 import { WebR } from 'webr';
-import { loadPyodide } from 'pyodide';
-import { initPyConsole } from './pyodide-console';
 import type { CanvasMessage } from 'webr/dist/webR/webr-chan';
+import type { PyodideWorker } from "./pyodide-worker";
 import './App.css';
 
 export interface TerminalInterface {
@@ -121,12 +121,23 @@ export function startWebRApp(elem: HTMLDivElement, packages: string[] = []) {
 }
 
 export function startPyodideApp(elem: HTMLDivElement, packages: string[] = []) {
-  const pyodidePromise = loadPyodide({
+  const workerScript = require('./pyodide-worker.wjs');
+  const worker = new Worker(
+    window.URL.createObjectURL(
+      new Blob([workerScript], { type: "text/javascript" })
+    )
+  );
+  const pyodideWorker = Comlink.wrap<PyodideWorker>(worker);
+  const pyodidePromise = pyodideWorker.init({
     indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.1/full/",
-    stdout: (msg) => console.log(msg),
-    stderr: (msg) => console.error(msg),
+  })
+  const pyConsolePromise = pyodidePromise.then(() => {
+    pyodideWorker.initPyConsole(Comlink.proxy(terminalInterface));
+    return {
+      writeConsole: async (line: string) => await pyodideWorker.writeConsole(line),
+      complete: async (source: string) => await pyodideWorker.complete(source),
+    }
   });
-  const pyConsolePromise = initPyConsole(pyodidePromise, terminalInterface);
 
   function App() {
     return (
@@ -153,22 +164,20 @@ export function startPyodideApp(elem: HTMLDivElement, packages: string[] = []) {
   root.render(<StrictMode><App /></StrictMode>);
 
   void (async () => {
-    const pyConsole = await pyConsolePromise;
-    const pyodide = pyConsole.pyodide;
-    await pyodide.loadPackage("micropip");
-    const micropip = pyodide.pyimport("micropip");
-    await Promise.all(packages.map((pkg) => () => micropip.install(pkg)))
-    await micropip.install("matplotlib");
-    await micropip.destroy();
+    await pyodidePromise;
+    await pyodideWorker.installPackages(packages);
 
     // Prepare plotting area
     (document as any).pyodideMplTarget = document.getElementById('drop-plot');
+    
+    /*
     await pyodide.runPythonAsync(`
       import matplotlib
       matplotlib.use("module://matplotlib_pyodide.wasm_backend")
       import matplotlib.pyplot as plt
       plt.show()
     `);
+    */
 
     // Clear the loading message
     terminalInterface.write('\x1b[2J\x1b[2H\rq');
@@ -176,7 +185,7 @@ export function startPyodideApp(elem: HTMLDivElement, packages: string[] = []) {
     // Start an async REPL
     for (; ;) {
       const command = await terminalInterface.read(">>> ");
-      await pyConsole.writeConsole(command);
+      await pyodideWorker.writeConsole(command);
     };
   })();
 }
