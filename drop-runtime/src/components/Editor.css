@@ -61,6 +61,7 @@
 
 .reveal .drop .cm-content {
   caret-color: var(--quarto-body-color);
+  font-family: var(--r-code-font);
 }
 
 .reveal .drop .cm-cursor,

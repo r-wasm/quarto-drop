@@ -55,6 +55,7 @@ export function Terminal({
         selectionBackground: style.getPropertyValue('--r-selection-background-color'),
       },
       fontSize: 22,
+      fontFamily: style.getPropertyValue('--r-code-font'),
       screenReaderMode: true,
     });
     const engine = webR ? "WebR" : "Pyodide";
